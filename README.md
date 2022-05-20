@@ -1,70 +1,136 @@
-# Getting Started with Create React App
+# GraphQL Hacker News Clone
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project was built as a [tutorial](https://www.howtographql.com/react-apollo/0-introduction/) on GraphQL. The project is a clone of Hacker News. Check out the final outcome on the screenshot below.
 
-## Available Scripts
+## Table of contents
 
-In the project directory, you can run:
+- [Overview](#overview)
+  - [The challenge](#the-challenge)
+  - [Screenshot](#screenshot)
+  - [App Features](#app-features)
+- [My process](#my-process)
+  - [Built with](#built-with)
+  - [What I learned](#what-i-learned)
+- [Installation](#installation)
+- [Author](#author)
 
-### `yarn start`
+## Overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### The challenge
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+To build a clone of the Hacker News website using:
 
-### `yarn test`
+- [React JS](https://reactjs.org/)
+- [GraphQL](https://graphql.org/)
+- [Apollo](https://www.apollographql.com/)
+- [Prisma](https://www.prisma.io/graphql)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Screenshots
 
-### `yarn build`
+![](./images/screenshot1.png)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### App Features
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Displays a list of links
+- Ability to search the list of links
+- Handles user authentication
+- Allows authenticated users to create new links
+- Allows authenticated users to upvote links (one vote per link and user)
+- Realtime updates when other users upvote a link or create a new one
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## My process
 
-### `yarn eject`
+### Built with
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- The GraphQL Node JS server from [this](https://www.howtographql.com/graphql-js/0-introduction) tutorial. Used this server as the backend server.
+- An SQLite DB for tutorial purposes. All processes implemented can however make use of other DBs like MongoDB or MySQL.
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### What I learned
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+How to initialize the Apollo Client in React for Authentication, Cache and WebSockets use with a GraphQL back-end server.
 
-## Learn More
+```js
+const httpLink = createHttpLink({
+  uri: 'http://localhost:4000'
+});
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+const authLink = setContext((_, { headers }) => {
+  const token = localStorage.getItem(AUTH_TOKEN);
+  return {
+    headers: {
+      ...headers,
+      authorization: token ? `Bearer ${token}` : ''
+    }
+  };
+});
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+const wsLink = new WebSocketLink({
+  uri: `ws://localhost:4000/graphql`,
+  options: {
+    reconnect: true,
+    connectionParams: {
+      authToken: localStorage.getItem(AUTH_TOKEN)
+    }
+  }
+});
 
-### Code Splitting
+const link = split(
+  ({ query }) => {
+    const { kind, operation } = getMainDefinition(query);
+    return (
+      kind === 'OperationDefinition' &&
+      operation === 'subscription'
+    );
+  },
+  wsLink,
+  authLink.concat(httpLink)
+);
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+const client = new ApolloClient({
+  link,
+  cache: new InMemoryCache()
+});
+```
 
-### Analyzing the Bundle Size
+How to send GraphQL Queries, Mutations and Subscriptions to a back-end server using the Apollo Client.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```js
+const CREATE_LINK_MUTATION = gql`
+    mutation PostMutation(
+        $description: String!
+        $url: String!
+    ) {
+        post(description: $description, url: $url) {
+            id
+            createdAt,
+            url
+            description
+        }
+    }
+`;
+```
 
-### Making a Progressive Web App
+## Installation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+This project was initialized with yarn but you can use the relevant npm commands for each yarn command below. After cloning the project run:
 
-### Advanced Configuration
+```
+$ yarn add
+```
+to install all dependencies. Then run:
+```
+$ yarn start
+```
+to start the React App. Also run:
+```
+$ cd server && yarn dev
+```
+to start the GraphQL back-end server.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Author
 
-### Deployment
+- Website - [Hillary Wando](http://hillarywando.com/)
+- Codepen - [@Wandonium](https://codepen.io/wandonium)
+- Twitter - [@hillarywando](https://www.twitter.com/hillarywando)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `yarn build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
